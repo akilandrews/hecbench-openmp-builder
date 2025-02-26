@@ -30,15 +30,15 @@ case $wf_type in
   "clean")
     echo "--INFO-- Remove prior results and any core dump files"
     omp_projects="$hecbench_source/*-omp"
-    find ${omp_projects} -maxdepth 1 -type d -name 'results'                  \
+    find ${omp_projects} -maxdepth 1 -type d -name 'results'                    \
       | xargs --no-run-if-empty rm -rf
-    find ${omp_projects} -maxdepth 1 -type f -name '*.core'                 	\
+    find ${omp_projects} -maxdepth 1 -type f -name '*.core'                     \
       | xargs --no-run-if-empty rm
-    find ${omp_projects} -maxdepth 1 -type f -name 'compile_results.txt'    	\
+    find ${omp_projects} -maxdepth 1 -type f -name 'compile_results.txt'        \
       | xargs --no-run-if-empty rm
-    find ${omp_projects} -maxdepth 1 -type f -name 'run_results.txt'        	\
+    find ${omp_projects} -maxdepth 1 -type f -name 'run_results.txt'            \
       | xargs --no-run-if-empty rm
-    find ${omp_projects} -maxdepth 1 -type f -name 'rocprof.*'	        	    \
+    find ${omp_projects} -maxdepth 1 -type f -name 'rocprof.*'                  \
       | xargs --no-run-if-empty rm
     ;;
   
@@ -59,11 +59,11 @@ case $wf_type in
       start_time_run=$(date '+%s')
       if [[ $wf_type == "build" ]]
       then
-        flux submit -n 1 -c 1 --quiet -o mpibind=off -o cpu-affinity=per-task	  \
+        flux submit -n 1 -c 1 --quiet -o mpibind=off -o cpu-affinity=per-task   \
 	        helpers/build_benchmark.sh "$project_dir $clang_config"
       else
-        flux submit -n 1 -c 1 -g 1 --quiet -o mpibind=off                   	  \
-          -o cpu-affinity=per-task -o gpu-affinity=per-task                 	  \
+        flux submit -n 1 -c 1 -g 1 --quiet -o mpibind=off                       \
+          -o cpu-affinity=per-task -o gpu-affinity=per-task                     \
           helpers/run_benchmark.sh "$project_dir $rocprof_input ${run_cmds[$i]}"
       fi
 

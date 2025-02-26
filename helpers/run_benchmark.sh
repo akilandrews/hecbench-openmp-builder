@@ -14,7 +14,7 @@ run_cmd=$(awk '{for(i=3;i<=NF;i++) printf("%s%s",$i,(i==NF)?"\n":OFS);}'        
     <<< "$1")
 
 cd $project_dir
-cmd="bash -c 'rocprof --stats -i $rocprof_input -o rocprof.csv $run_cmd" 	    \
+cmd="bash -c 'rocprof --stats -i $rocprof_input -o rocprof.csv $run_cmd"        \
 cmd+=" &> run_results.txt'"
 eval $cmd
 
