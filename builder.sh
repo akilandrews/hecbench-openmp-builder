@@ -30,6 +30,8 @@ case $wf_type in
   "clean")
     echo "--INFO-- Remove prior results and any core dump files"
     omp_projects="$hecbench_source/*-omp"
+    find ${omp_projects} -maxdepth 1 -type d -name 'results'                  \
+      | xargs --no-run-if-empty rm -rf
     find ${omp_projects} -maxdepth 1 -type f -name '*.core'                 	\
       | xargs --no-run-if-empty rm
     find ${omp_projects} -maxdepth 1 -type f -name 'compile_results.txt'    	\
