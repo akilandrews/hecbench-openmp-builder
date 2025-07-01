@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2025 Lawrence Livermore National Security, LLC and other
+# hecbench-openmp-builder project developers. See the top-level COPYRIGHT
+# file for details.
+#
+# SPDX-License-Identifier: MIT
   
 set -e
 

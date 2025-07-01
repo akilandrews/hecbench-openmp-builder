@@ -1,15 +1,20 @@
 #!/bin/bash
+# Copyright (c) 2025 Lawrence Livermore National Security, LLC and other
+# hecbench-openmp-builder project developers. See the top-level COPYRIGHT
+# file for details.
+#
+# SPDX-License-Identifier: MIT
   
 set -e
 
 if [[ -z "$1" ]]
 then
-    echo "Usage: $0 <hecbench_source output_dir>"
+    echo "Usage: $0 <hecbench_source config_dir>"
     exit 1
 fi
 
 hecbench_source=$(awk '{ printf("%s", $1) }' <<< "$1")
-output_dir=$(awk '{ printf("%s", $2) }' <<< "$1")
+config_dir=$(awk '{ printf("%s", $2) }' <<< "$1")
 
 # Get benchmarks Makefiles.aomp
 hec_projects=$(find ${hecbench_source} -type f -name "Makefile.aomp"            \
@@ -34,7 +39,7 @@ remove_projects+=("atomicIntrinsics-omp" "atomicReduction-omp"                  
 
 # Issue: c++
 remove_projects+=("langford-omp" "memcpy-omp" "minibude-omp" "permutate-omp"    \
-  "prna-omp" "sad-omp" "sptrsv-omp")
+  "prna-omp" "sad-omp" "sptrsv-omp" "ntt-omp" "s3d-omp")
 
 # Issue: libBlasLapack.a
 remove_projects+=("axhelm-omp")
@@ -55,7 +60,7 @@ remove_projects+=("asmooth-omp" "asta-omp" "atomicPerf-omp"                     
   "qtclustering-omp" "quicksort-omp" "sobel-omp" "sort-omp" "ss-omp"            \
   "svd3x3-omp" "thomas-omp" "tonemapping-omp" "tqs-omp" "triad-omp" "tsp-omp"   \
   "vmc-omp" "xlqc-omp" "kernelLaunch-omp" "pnpoly-omp" "quantBnB-omp"           \
-  "easyWave-omp" "snake-omp")
+  "easyWave-omp" "snake-omp" "adamw-omp")
 
 # Issue: long run times
 remove_projects+=("affine-omp" "all-pairs-distance-omp" "atomicCost-omp"        \
@@ -75,7 +80,7 @@ remove_projects+=("mallocFree-omp")
 remove_projects+=("adv-omp" "convolutionSeparable-omp" "hwt1d-omp"              \
   "loopback-omp" "lud-omp" "nw-omp" "radixsort-omp" "reaction-omp" "rfs-omp"    \
   "rng-wallace-omp" "scan2-omp" "shmembench-omp" "split-omp" "vol2col-omp"      \
-  "wallace-omp" "zmddft-omp")
+  "zmddft-omp")
 
 # Remove benchmarks with issues
 echo "--INFO-- Remove benchmarks with issues"
@@ -85,7 +90,7 @@ for (( i=0; i<num_remove_projects; i++ ));
 do
   removed+="${remove_projects[$i]} "
   replace_str=$(sed 's;/;\\/;g' <<< "$hecbench_source/${remove_projects[$i]}")
-  replace_str="/$replace_str/d"
+  replace_str="/$replace_str/d"  
   hec_projects=$(sed "$replace_str" <<< "$hec_projects")
 done
 [[ ! -z "$removed" ]] && echo "$removed"
@@ -93,7 +98,6 @@ declare -a makefile_paths=()
 for makefile_path in $hec_projects;
 do
   makefile_paths+=($makefile_path)
-  count=$((count + 1))
 done
 num_projects=${#makefile_paths[@]}
 message="$num_projects ($num_hec_projects - $num_remove_projects)"
@@ -130,8 +134,6 @@ done
 
 # Create files 'projects.txt' and 'run-cmds.txt'
 echo "--INFO-- Create files 'projects.txt' and 'run-cmds.txt'"
-[[ -f "$output_dir/projects.txt" ]] && rm ${output_dir}/projects.txt
-[[ -f "$output_dir/run-cmds.txt" ]] && rm ${output_dir}/run-cmds.txt
 declare -a run_cmds
 for (( i=0; i<num_projects; i++ ));
 do
@@ -153,16 +155,17 @@ do
   # Store benchmark run command with parameters
   exec_full_path=$(sed -n "s/Makefile.aomp/main/p" <<< "${makefile_paths[$i]}")
   run_cmds+=("$exec_full_path $has_option")
-  project=$(awk 'BEGIN {FS="/"} {print $8}' <<< "$exec_full_path")
+  project=$(awk 'BEGIN {FS="/"} {print $7}' <<< "$exec_full_path")
   printf "%d %s\n" "$i" "$project"
 done
 
 # Verify array sizes and output to file
 if [ "${#makefile_paths[@]}" -ne "${#run_cmds[@]}" ]
 then
-    echo "--ERROR-- num projects != num cmds"
+    printf "%s%d" "--ERROR-- num projects " "${#makefile_paths[@]}"
+    printf "%s%d\n" " != num cmds " "${#run_cmds[@]}"
     echo "--ERROR-- Exiting!"
     exit 1
 fi
-declare -p run_cmds > ${output_dir}/run-cmds.txt
-declare -p makefile_paths > ${output_dir}/projects.txt
+declare -p run_cmds > ${config_dir}/run-cmds.txt
+declare -p makefile_paths > ${config_dir}/projects.txt
