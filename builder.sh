@@ -54,7 +54,7 @@ case $wf_type in
     helpers/get_benchmarks.sh "$hecbench_source $config_dir"
     ;;
   
-  # Build and execute available omp benchmarks using Flux submit run 
+  # Build and execute available omp benchmarks using Flux submit 
   "build" | "run")
     source ${config_dir}/projects.txt
     num_projects=${#makefile_paths[@]}
