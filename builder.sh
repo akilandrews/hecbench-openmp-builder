@@ -15,18 +15,17 @@ then
 else
   wf_type=$1
 fi
-
-source ./config/env.sh
-
-# Variables *note customize to your file system
 root_dir="$(pwd)"
-hecbench_source=$(readlink -f "$root_dir/../HeCBench/src")
-output_dir=$(readlink -f "$root_dir/../jobs")
-config_dir=$(readlink -f "$root_dir/../configs")
+source $root_dir/config/env.sh
 clang_config="$root_dir/config/amdgcn-amd-amdhsa.cfg"
 rocprof_input="$root_dir/config/rocprof-input.txt"
 
-# Begin workflow
+# Variables *note customize to your file system
+hecbench_source=$(readlink -f "$root_dir/../HeCBench/src")
+output_dir=$(readlink -f "$root_dir/../jobs")
+config_dir=$(readlink -f "$root_dir/../configs")
+
+# Begin workflow type
 echo "--INFO-- Begin workflow $wf_type"
 start_time=$(date '+%s')
 [[ ! -f "$config_dir" ]] && mkdir -p ${config_dir}
