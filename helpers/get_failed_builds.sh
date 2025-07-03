@@ -9,18 +9,18 @@ set -e
 
 if [[ -z "$1" ]]
 then
-    echo "Usage: $0 <<build|run|job> config_dir output_dir>"
+    echo "Usage: $0 <<build|run|job> outputs_dir jobs_dir>"
     exit 1
 fi
 
 wf_type=$(awk '{ printf("%s", $1) }' <<< "$1")
-config_dir=$(awk '{ printf("%s", $2) }' <<< "$1")
-output_dir=$(awk '{ printf("%s", $3) }' <<< "$1")
+outputs_dir=$(awk '{ printf("%s", $2) }' <<< "$1")
+jobs_dir=$(awk '{ printf("%s", $3) }' <<< "$1")
 
 echo "--INFO-- Searching benchmarks $wf_type"
-source ${config_dir}/projects.txt
+source ${outputs_dir}/projects.txt
 num_projects=${#makefile_paths[@]}
-source ${config_dir}/run-cmds.txt
+source ${outputs_dir}/run-cmds.txt
 num_failed=0
 num_success=0
 msg_success="'rocprof.csv' is generating"
@@ -62,7 +62,7 @@ do
     # Check if flux job exit code not equal zero
     if [[ $wf_type == "job" ]]
     then
-        job_output=$(find ${output_dir} -type f -name "job-$project-*.out")
+        job_output=$(find ${jobs_dir} -type f -name "job-$project-*.out")
         msg=$(sed -n "1p" $job_output)
         if [[ -z "$msg" ]]
         then

@@ -15,27 +15,38 @@ then
 else
   wf_type=$1
 fi
-root_dir="$(pwd)"
-source $root_dir/config/env.sh
-clang_config="$root_dir/config/amdgcn-amd-amdhsa.cfg"
-rocprof_input="$root_dir/config/rocprof-input.txt"
 
-# Variables *note customize to your file system
-hecbench_source=$(readlink -f "$root_dir/../HeCBench/src")
-output_dir=$(readlink -f "$root_dir/../jobs")
-config_dir=$(readlink -f "$root_dir/../configs")
+# Directories for build and installation (*Note customize to your file system)
+root_dir="$(pwd)"
+config_dir="$root_dir/config"
+source $config_dir/env.sh
+clang_config="$config_dir/amdgcn-amd-amdhsa.cfg"
+rocprof_input="$config_dir/rocprof-input.txt"
+jobs_dir=$(readlink -f "$root_dir/../jobs")
+outputs_dir=$(readlink -f "$root_dir/../hob-configs")
+hecbench_install_dir=$(readlink -f "$root_dir/../")
+
+# Create directories and clone HecBench suite
+[[ ! -f "$jobs_dir" ]] && mkdir -p ${jobs_dir}
+[[ ! -f "$outputs_dir" ]] && mkdir -p ${outputs_dir}
+if [[ ! -d ${hecbench_install_dir}/HeCBench ]]
+then
+    cd $hecbench_install_dir
+    git clone https://github.com/zjin-lcf/HeCBench.git
+    cd $root_dir
+fi
+hecbench_source=$hecbench_install_dir/HeCBench/src
+echo "--INFO-- HeCBench project directory $hecbench_source"
 
 # Begin workflow type
 echo "--INFO-- Begin workflow $wf_type"
 start_time=$(date '+%s')
-[[ ! -f "$config_dir" ]] && mkdir -p ${config_dir}
-[[ ! -f "$output_dir" ]] && mkdir -p ${output_dir}
 case $wf_type in
 
   # Clean available omp benchmark directories
   "clean")
     echo "--INFO-- Remove prior results and any core dump files"
-    rm -f ${output_dir}/* ${config_dir}/*
+    rm -f ${jobs_dir}/* ${outputs_dir}/*
     omp_projects="$hecbench_source/*-omp"
     find ${omp_projects} -maxdepth 1 -type d -name 'results'                    \
       | xargs --no-run-if-empty rm -rf
@@ -51,14 +62,14 @@ case $wf_type in
   
   # Get available omp benchmarks
   "get")
-    helpers/get_benchmarks.sh "$hecbench_source $config_dir"
+    helpers/get_benchmarks.sh "$hecbench_source $outputs_dir"
     ;;
   
   # Build and execute available omp benchmarks using Flux submit 
   "build" | "run")
-    source ${config_dir}/projects.txt
+    source ${outputs_dir}/projects.txt
     num_projects=${#makefile_paths[@]}
-    source ${config_dir}/run-cmds.txt
+    source ${outputs_dir}/run-cmds.txt
     for (( i=0; i<num_projects; i++ ));
     do
       project_dir=$(sed -n "s/\/Makefile.aomp//p" <<< "${makefile_paths[$i]}")
@@ -70,10 +81,10 @@ case $wf_type in
       else
         flux submit -n 1 -c 1 -g 1 --quiet -o mpibind=off                       \
           -o cpu-affinity=per-task -o gpu-affinity=per-task                     \
-          --output=$output_dir/job-$project-{{id}}.out                          \
+          --output=$jobs_dir/job-$project-{{id}}.out                            \
           helpers/run_benchmark.sh "$project_dir $rocprof_input ${run_cmds[$i]}"
       fi
-      printf "%d %s\n" "$i" "$project"
+      printf "%3d %s\n" "$i" "$project"
     done
     ;;
 

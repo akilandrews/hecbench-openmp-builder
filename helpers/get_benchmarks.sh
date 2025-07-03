@@ -9,12 +9,12 @@ set -e
 
 if [[ -z "$1" ]]
 then
-    echo "Usage: $0 <hecbench_source config_dir>"
+    echo "Usage: $0 <hecbench_source outputs_dir>"
     exit 1
 fi
 
 hecbench_source=$(awk '{ printf("%s", $1) }' <<< "$1")
-config_dir=$(awk '{ printf("%s", $2) }' <<< "$1")
+outputs_dir=$(awk '{ printf("%s", $2) }' <<< "$1")
 
 # Get benchmarks Makefiles.aomp
 hec_projects=$(find ${hecbench_source} -type f -name "Makefile.aomp"            \
@@ -167,5 +167,5 @@ then
     echo "--ERROR-- Exiting!"
     exit 1
 fi
-declare -p run_cmds > ${config_dir}/run-cmds.txt
-declare -p makefile_paths > ${config_dir}/projects.txt
+declare -p run_cmds > ${outputs_dir}/run-cmds.txt
+declare -p makefile_paths > ${outputs_dir}/projects.txt
